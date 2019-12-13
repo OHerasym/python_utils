@@ -1,4 +1,5 @@
 import logging, logging.handlers
+import functools
 
 class MyLogger:
     def init():
@@ -19,6 +20,21 @@ class MyLogger:
         _logger.addHandler(ch)
 
         return _logger
+
+class logfunc(object):
+    def __init__(self, func):
+        functools.update_wrapper(self, func)
+        self.f = func
+
+    def __call__(self, *args, **kwards):
+        logger.debug('start ' + self.f.__name__)
+        result = None
+        try:
+            result = self.f(self, *args, **kwards)
+        except:
+            result = self.f(*args, **kwards)
+        logger.debug('finish ' + self.f.__name__)
+        return result
 
 
 logger = MyLogger.init()
