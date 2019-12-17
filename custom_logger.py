@@ -20,6 +20,15 @@ class MyLogger:
 
         return _logger
 
+class logfunc(object):
+    def __init__(self, func):
+        self.f = func
+
+    def __call__(self):
+        logger.debug('start ' + self.f.__name__)
+        self.f()
+        logger.debug('finish ' + self.f.__name__)
+
 
 logger = MyLogger.init()
 
