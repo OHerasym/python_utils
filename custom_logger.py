@@ -1,7 +1,7 @@
 import logging, logging.handlers
 import functools
 
-class MyLogger:
+class MyLogger(object):
     def init():
         _logger = logging.getLogger('custom_logger')
         _logger.setLevel(logging.DEBUG)
@@ -21,20 +21,23 @@ class MyLogger:
 
         return _logger
 
-class logfunc(object):
-    def __init__(self, func):
-        functools.update_wrapper(self, func)
-        self.f = func
+def logfunc(func, class_name=None):
+    def run(*args, **kwards):
+        func_name = func.__name__
+        if class_name:
+            func_name = class_name + '.' + func.__name__
+        logger.debug('start ' + func_name)
+        func(*args, *kwards)
+        logger.debug('finish ' + func_name)
+    return run
 
-    def __call__(self, *args, **kwards):
-        logger.debug('start ' + self.f.__name__)
-        result = None
-        try:
-            result = self.f(self, *args, **kwards)
-        except:
-            result = self.f(*args, **kwards)
-        logger.debug('finish ' + self.f.__name__)
-        return result
+
+class MetaLog(type):
+    def __new__(cls, name, bases, dct):
+        for m in dct:
+            if hasattr(dct[m], '__call__'):
+                dct[m] = logfunc(dct[m], name)
+        return type.__new__(cls, name, bases, dct)
 
 
 logger = MyLogger.init()
