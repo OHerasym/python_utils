@@ -55,9 +55,9 @@ class SQLLiteOrm(object):
                 if self.debug:
                     print('DROP TABLE ' + '"'+ table_name + '"')
                 self.cursor.execute('DROP TABLE ' + '"'+ table_name + '"')
-            except:
+            except Exception as e:
                 if self.debug:
-                    print('ERROR: drop table fail')
+                    print('ERROR: drop table fail: ', e)
 
     def save_table(self, obj):
         if self.debug:
