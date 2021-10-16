@@ -1,8 +1,11 @@
 import sqlite3
 from threading import Lock, Thread, Event
 import inspect
+import uuid
 
 from error_manager import em
+
+#TODO: support for int values
 
 DATABASE_NAME = 'test.db'
 
@@ -100,7 +103,7 @@ class SQLLiteOrm(object):
 
         if self.debug:
             print('RESULT DICT: ', result_dict)
-        # print('RESULT DICT: ', result_dict)
+
         return result_dict
 
     def read_table_list(self, obj):
@@ -126,7 +129,9 @@ class SQLLiteOrm(object):
 
             self.cursor.execute("SELECT * FROM " + table_name)
             result = self.cursor.fetchall()
-            print('RESULT LEN: ',len(result))
+
+            if self.debug:
+                print('RESULT LEN: ',len(result))
 
             return result
 
@@ -277,6 +282,11 @@ class TableList:
     def init(self):
         self._list = []
 
+        temp_obj = {}
+        temp_obj['id'] = ''
+        temp_obj.update(self.__dict__)
+        self.__dict__ = temp_obj
+
         sql_orm.migrate(self)
         result = sql_orm.read_table_list(self)
 
@@ -325,6 +335,8 @@ class TableList:
         for key in self.__dict__.keys():
             if key != '_list':
                 item.__dict__[key] = ''
+
+        item.id = str(uuid.uuid1())
 
         return item
 
