@@ -3,9 +3,12 @@ from threading import Lock, Thread, Event
 import inspect
 import uuid
 
-from error_manager import em
+ERROR_MANAGER = True
 
-#TODO: support for int values
+try:
+    from error_manager import em
+except:
+    ERROR_MANAGER = False
 
 DATABASE_NAME = 'test.db'
 
@@ -118,7 +121,11 @@ class SQLLiteOrm(object):
 
             for key in obj.__dict__.keys():
                 if key != '_list':
-                    query += key + ' text, '
+                    print('TYPE IS INT:', type(obj.__dict__[key]) is int)
+                    if type(obj.__dict__[key]) is int:
+                        query += key + ' INTEGER, '
+                    else:
+                        query += key + ' text, '
 
             query = query[:-2] + ' )'
 
@@ -144,8 +151,9 @@ class SQLLiteOrm(object):
                 query = "('" 
 
                 for value in obj.__dict__.values():
-                    value = value.replace("'",':::')
-                    query += value + "', '"
+                    if type(value) is str:
+                        value = value.replace("'",':::')
+                    query += str(value) + "', '"
 
                 query = query[:-4] + "')"
                 if self.debug:
@@ -155,7 +163,8 @@ class SQLLiteOrm(object):
                 self.conn.commit()
         except Exception as e:
             print('ERROR: ', e)
-            em.new_error()
+            if ERROR_MANAGER:
+                em.new_error()
 
     def edit_table_obj(self, this, obj):
         table_name = this.__class__.__name__
@@ -187,7 +196,8 @@ class SQLLiteOrm(object):
 
         except Exception as e:
             print('ERROR: ', e)
-            em.new_error()
+            if ERROR_MANAGER:
+                em.new_error()
 
     def remove_table_obj(self, this, obj):
         table_name = this.__class__.__name__
@@ -211,7 +221,8 @@ class SQLLiteOrm(object):
 
         except Exception as e:
             print('ERROR: ', e)
-            em.new_error()
+            if ERROR_MANAGER:
+                em.new_error()
 
     def migrate(self, obj):
         table_name = obj.__class__.__name__
@@ -317,7 +328,8 @@ class TableList:
                     _inner_object.__dict__[key] = ''
             for key in user_keys:
 
-                _inner_object.__dict__[key] = item[i].replace(':::', "'")
+                if type(item[i]) is str:
+                    _inner_object.__dict__[key] = item[i].replace(':::', "'")
                 
                 i += 1
 
