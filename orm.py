@@ -65,6 +65,54 @@ class SQLLiteOrm(object):
                 if self.debug:
                     print('ERROR: drop table fail: ', e)
 
+    def save_history_table(self, obj):
+        if self.debug:
+            print('TABLE NAME: ', obj.__class__.__name__)
+            print('TABLE: ', obj.__dict__)
+            print('TABLE KEYS: ', obj.__dict__.keys())
+
+        table_name = obj.__class__.__name__
+
+        user_keys = []
+
+        for key in obj.__dict__.keys():
+            if key != '_list':
+                user_keys.append(key)
+
+        try:
+            with self.lock:
+                query = "('" 
+
+                for user_key in user_keys:
+                    value = obj.__dict__[user_key]
+                    if type(value) is str:
+                        value = value.replace("'",':::')
+                    query += str(value) + "', '"
+
+                query = query[:-4] + "')"
+                if self.debug:
+                    print('QUERY: ', query)
+
+                self.cursor.execute("INSERT INTO " + table_name + " VALUES " + query)
+                self.conn.commit()
+        except Exception as e:
+            print('ERROR: ', e)
+            if ERROR_MANAGER:
+                em.new_error()
+
+    def delete_last_row(self, obj):
+        if self.debug:
+            print('TABLE NAME: ', obj.__class__.__name__)
+            print('TABLE: ', obj.__dict__)
+            print('TABLE KEYS: ', obj.__dict__.keys())
+        table_name = obj.__class__.__name__
+
+        with self.lock:
+            query = ''
+            self.cursor.execute("DELETE FROM " + table_name + " WHERE ROWID = (SELECT MAX(ROWID) FROM " + table_name + ");")
+            self.conn.commit()
+
+
     def save_table(self, obj):
         if self.debug:
             print('TABLE NAME: ', obj.__class__.__name__)
@@ -121,7 +169,6 @@ class SQLLiteOrm(object):
 
             for key in obj.__dict__.keys():
                 if key != '_list':
-                    print('TYPE IS INT:', type(obj.__dict__[key]) is int)
                     if type(obj.__dict__[key]) is int:
                         query += key + ' INTEGER, '
                     else:
@@ -363,6 +410,48 @@ class TableList:
 
     # def __del__(self):
     #     self.save()
+
+
+class ObjectHistory:
+    def init(self):
+        self._list = []
+
+        temp_obj = {}
+        temp_obj['id'] = ''
+        temp_obj.update(self.__dict__)
+        self.__dict__ = temp_obj
+
+        sql_orm.migrate(self)
+        result = sql_orm.read_table_list(self)
+
+        user_keys = []
+
+        for key in self.__dict__.keys():
+            if key != '_list':
+                user_keys.append(key)
+
+        if result:
+            for key, value in zip(user_keys,result[-1]):
+                self.__dict__[key] = value
+
+
+    def save(self):
+        sql_orm.save_history_table(self)
+
+    def cancel(self):
+        result = sql_orm.read_table_list(self)
+
+        user_keys = []
+
+        for key in self.__dict__.keys():
+            if key != '_list':
+                user_keys.append(key)
+
+        if len(result) > 1:
+            for key, value in zip(user_keys,result[-2]):
+                self.__dict__[key] = value
+
+            sql_orm.delete_last_row(self)
 
 
 
