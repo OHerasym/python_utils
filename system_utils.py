@@ -1,10 +1,14 @@
 from custom_logger import logger
 import psutil
 import shutil
+import platform
+from uuid import getnode as get_mac
+import getpass
+import socket
 import time
 import threading
+from datetime import datetime
 
-#TODO: add logs
 
 class SystemValue:
     def __init__(self):
@@ -67,6 +71,7 @@ class SystemScanner:
         self.time_period['RAM'] = 0
         self.time_period['HDD'] = 0
         self.time_period['SOCKETS'] = 0
+        self.info()
 
     def _check(self, value, user_value, check_type, less=False):
         if value:
@@ -120,9 +125,17 @@ class SystemScanner:
         self.stop_thread = True
         logger.info('Stopping SystemScanner')
 
+    def info(self):
+        logger.info('USERNAME: ' + getpass.getuser())
+        logger.info('IP address: ' + socket.gethostbyname(socket.gethostname()))
+        logger.info('MAC address: ' + ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2)))
+        logger.info('OS: ' + platform.platform())
+        logger.info('Server boot time: ' + str(datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S')))
+
 
 if __name__ == '__main__':
     obj = SystemValue()
+
     # obj.cpu()
     # obj.ram()
     # obj.hdd()
