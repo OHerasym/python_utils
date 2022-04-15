@@ -3,10 +3,17 @@ from mongoengine import *
 
 from pymongo import MongoClient
 from pprint import pprint
+from bson.objectid import ObjectId
 
 #pip3 install mongoengine
 #sudo systemctl start mongod
 #pytest -rA
+
+#TODO: add method for saving database to file
+
+#TODO: generate add method with self.schema parameters
+
+#TODO: generate remove methods from self.schema parameters
 
 
 CHECK_SERVICE_BEFORE_START = True
@@ -29,6 +36,12 @@ def isMongoServiceRun():
         return True
 
 runMongoService()
+
+#Generated methods for lists:
+# add_ - add new element to list
+# remove_ - remove element from list
+# get_ - get list
+# print_ - print list
 
 class MongoBaseCache:
     def __init__(self):
@@ -55,6 +68,16 @@ class MongoBaseCache:
                 return self.get_list(list_name)
             return func
 
+        def update_factory(schema_value_name):
+            def func(self, key_value, task_name, value):
+                self.update_value(key_value, schema_value_name, task_name, value)
+            return func
+
+        def remove_item_factory(schema_value_name):
+            def func(self, key_value, task_name):
+                self.remove_item(key_value, schema_value_name, task_name)
+            return func
+
         if self.lists:
             for list_name in self.lists:
                 f = add_factory(list_name)
@@ -67,6 +90,23 @@ class MongoBaseCache:
                 setattr(MongoBaseCache, 'print_' + list_name, p)
                 setattr(MongoBaseCache, 'get_' + list_name, g)
 
+        if self.schema:
+            for schema_value_name in self.schema:
+                f = update_factory(schema_value_name)
+                setattr(MongoBaseCache, 'update_' + schema_value_name, f)
+
+                f = remove_item_factory(schema_value_name)
+                setattr(MongoBaseCache, 'remove_' + schema_value_name, f)
+
+    def remove_item(self, key_value, schema_value_name, task_name):
+        self.db.posts.update_one({self.key_value: key_value}, {'$pull': {self.value_key: {schema_value_name: task_name}}})
+    
+    def update_value(self, key_value, schema_value_name, task_name, value):
+        self.db.posts.find_and_modify(
+                query = {self.key_value: key_value, ''+ self.value_key + '.' + self.schema[0] : task_name},
+                update = { "$set": {self.value_key + '.$.' + schema_value_name : value} }
+            )
+    
     def _get_list(self, list_name):
         if not self.list_key:
             self.list_key = 'list_name'
@@ -141,7 +181,6 @@ class MongoBaseCache:
                 print('obj was not found in list')
 
                 self.db.posts.update_one({self.list_key: list_name}, {'$push' : {self.value_key: value}})
-                #TODO: push obj in to list
 
     def findListValueObject(self, list_name, obj):
         result = self.db.posts.find({self.list_key: list_name})
@@ -164,7 +203,7 @@ class MongoBaseCache:
 
 
     def listExists(self, list_name):
-        result = self.db.posts.find({'list_name': list_name})
+        result = self.db.posts.find({self.list_key : list_name})
         length = result.count()
 
         if length == 1:
@@ -181,8 +220,8 @@ class MongoBaseCache:
         # return True
         # return False
 
-    def add(self, obj):
-        if self.alreadyExists(obj) == 'NOT_FOUND':
+    def add(self, key_value, obj):
+        if self.alreadyExists(key_value) == 'NOT_FOUND':
             post_data = {}
 
             for key in obj.__dict__.keys():
@@ -195,22 +234,35 @@ class MongoBaseCache:
 
             pprint(post_data)
 
+            obj = {
+                self.value_key : [post_data],
+                self.key_value : key_value
+            }
+
             if len(post_data):
-                result = posts.insert_one(post_data)
+                result = posts.insert_one(obj)
                 print('One post: {0}'.format(result.inserted_id))
         else:
-            self._update(obj)
+            self._update(key_value, obj)
 
-    def _update(self, obj):
+    def _find_object(self, key_value, obj):
+        result = self.db.posts.find({self.key_value: key_value})
 
-        json_update = {}
+        for item in result:
+            for task in item[self.value_key]:
+                if task[self.schema[0]] == getattr(obj, self.schema[0]):
+                    return True
+        return False
 
-        for key in obj.__dict__.keys():
-            if key in self.schema:
-                json_update[key] = getattr(obj, key)
+    def _update(self, key_value, obj):
+        if not self._find_object(key_value, obj):
+            json_update = {}
 
-        self.db.posts.update_one({self.key_value : getattr(obj, self.key_value)}, 
-            { '$set' : json_update })
+            for key in obj.__dict__.keys():
+                if key in self.schema:
+                    json_update[key] = getattr(obj, key)
+
+            self.db.posts.update_one({self.key_value: key_value}, {'$push': {self.value_key: json_update}})
 
     def _schema_len_check(self, obj, cached_obj):
         cached_object_schema_count = len(cached_obj.keys()) - 1
@@ -222,16 +274,12 @@ class MongoBaseCache:
 
         return (cached_object_schema_count == object_schema_count)
 
-    def alreadyExists(self, obj):
-        result = self.db.posts.find({self.key_value : getattr(obj, self.key_value)})
+    def alreadyExists(self, key_value):
+        result = self.db.posts.find({self.key_value : key_value})
         length = result.count()
+
         if length == 1:
-            print(result[0])
-
-            if result[0][self.exists_check] == getattr(obj, self.exists_check) and self._schema_len_check(obj, result[0]):
-                    return 'UP_TO_DATE'
-            return 'NEED_UPDATE'
-
+            return 'FOUND'
         elif length == 0:
             return 'NOT_FOUND'
         else:
@@ -265,6 +313,9 @@ class MongoBaseCache:
             # print('KEY in SCHEMA:', key)
 
         return obj
+
+    def remove_id(self, idd):
+        self.db.posts.remove({'_id': ObjectId(idd)})
 
     def remove(self, key_value):
         if type(key_value) is str:
