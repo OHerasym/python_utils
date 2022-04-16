@@ -9,11 +9,8 @@ from bson.objectid import ObjectId
 #sudo systemctl start mongod
 #pytest -rA
 
-#TODO: add method for saving database to file
-
-#TODO: generate add method with self.schema parameters
-
-#TODO: generate remove methods from self.schema parameters
+#mongodump --db instagram --out /home/user/backup
+#mongorestore --db instagram --drop /home/user/backup/instagram
 
 
 CHECK_SERVICE_BEFORE_START = True
@@ -78,7 +75,7 @@ class MongoBaseCache:
                 self.remove_item(key_value, schema_value_name, task_name)
             return func
 
-        if self.lists:
+        if hasattr(self, 'lists'):
             for list_name in self.lists:
                 f = add_factory(list_name)
                 r = remove_factory(list_name)
@@ -90,13 +87,16 @@ class MongoBaseCache:
                 setattr(MongoBaseCache, 'print_' + list_name, p)
                 setattr(MongoBaseCache, 'get_' + list_name, g)
 
-        if self.schema:
+        if hasattr(self, 'schema'):
             for schema_value_name in self.schema:
                 f = update_factory(schema_value_name)
                 setattr(MongoBaseCache, 'update_' + schema_value_name, f)
 
                 f = remove_item_factory(schema_value_name)
                 setattr(MongoBaseCache, 'remove_' + schema_value_name, f)
+
+        if not hasattr(self, 'key_value'):
+            self.key_value = self.schema[0]
 
     def remove_item(self, key_value, schema_value_name, task_name):
         self.db.posts.update_one({self.key_value: key_value}, {'$pull': {self.value_key: {schema_value_name: task_name}}})
@@ -217,8 +217,52 @@ class MongoBaseCache:
         result = self.db.posts.find({list_name : value})
 
         print(result)
-        # return True
-        # return False
+
+    def add3(self, *args):
+        if len(args) == len(self.schema):
+            obj = self.empty()
+
+            for arg, sch in zip(args, self.schema):
+                setattr(obj, sch, arg)
+
+            self.add2(obj)
+        elif len(args) == 1:
+            self.add2(args[0])
+        else:
+            raise 'Some error'
+
+    def add2(self, obj):
+        if self.alreadyExists(getattr(obj, self.schema[0])) == 'NOT_FOUND':
+            post_data = {}
+
+            for key in obj.__dict__.keys():
+                if key in self.schema:
+                    post_data[key] = getattr(obj, key)
+                else:
+                    print(key, ' is not in schema')
+
+            posts = self.db.posts
+
+            pprint(post_data)
+
+            if len(post_data):
+                result = posts.insert_one(post_data)
+                print('One post: {0}'.format(result.inserted_id))
+        else:
+            self.update2(obj)
+
+    def update2(self, obj):
+        post_data = {}
+
+        for key in obj.__dict__.keys():
+            if key in self.schema:
+                post_data[key] = getattr(obj, key)
+            else:
+                print(key, ' is not in schema')
+
+        posts = self.db.posts
+
+        self.db.posts.update_one({self.schema[0]: post_data[self.schema[0]]}, {'$set': post_data})
 
     def add(self, key_value, obj):
         if self.alreadyExists(key_value) == 'NOT_FOUND':
