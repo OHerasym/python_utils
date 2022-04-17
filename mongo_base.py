@@ -341,6 +341,10 @@ class MongoBaseCache:
         for document in cursor: 
             pprint(document)
 
+    def get_all(self):
+        cursor = self.db.posts.find({})
+        return cursor
+
     def size(self):
         return self.db.posts.find({}).count()
 
