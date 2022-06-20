@@ -204,7 +204,7 @@ class MongoBaseCache:
 
     def listExists(self, list_name):
         result = self.db.posts.find({self.list_key : list_name})
-        length = result.count()
+        length = self.db.posts.count_documents({self.list_key : list_name})
 
         if length == 1:
             return 'FOUND'
@@ -320,7 +320,7 @@ class MongoBaseCache:
 
     def alreadyExists(self, key_value):
         result = self.db.posts.find({self.key_value : key_value})
-        length = result.count()
+        length = self.db.posts.count_documents({self.key_value : key_value})
 
         if length == 1:
             return 'FOUND'
