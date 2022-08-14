@@ -1,3 +1,4 @@
+"""Module for scanning system values"""
 import shutil
 import platform
 from uuid import getnode as get_mac
@@ -18,13 +19,13 @@ class SystemValue:
     def cpu(self):
         """Get CPU usage"""
         cpu = psutil.cpu_percent(interval=1)
-        logger.debug('CPU: ' + str(cpu))
+        logger.debug('CPU: %s', str(cpu))
         return cpu
 
     def ram(self):
         """Get RAM usage"""
         ram = psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-        logger.debug('RAM: %s' % str(int(ram)))
+        logger.debug('RAM: %s', str(int(ram)))
         return int(ram)
 
     def hdd(self):
@@ -33,12 +34,12 @@ class SystemValue:
         logger.debug('Total HDD: {} GiB'.format((total // (2**30))))
         logger.debug("Used HDD: {} GiB".format(used // (2**30)))
         logger.debug('Free HDD: {} GiB'.format((free // (2**30))))
-        return (free // (2**30))
+        return free // (2**30)
 
     def sockets(self):
         """Get sockets count"""
         result = psutil.net_connections()
-        logger.debug('SOCKETS: ' + str(len(result)))
+        logger.debug('SOCKETS: %s', str(len(result)))
         return len(result)
 
     def _lan(self):
@@ -55,9 +56,11 @@ class SystemValue:
             time.sleep(1)
 
     def convert_to_gbit(self, value):
+        """Convert bits to Gbit"""
         return value/1024./1024./1024.*8
 
     def lan(self, value):
+        """Print lan data"""
         print("%0.3f" % self.convert_to_gbit(value))
 
 
@@ -132,12 +135,12 @@ class SystemScanner:
         logger.info('Stopping SystemScanner')
 
     def info(self):
-        logger.info('USERNAME: ' + getpass.getuser())
-        logger.info('IP address: ' + socket.gethostbyname(socket.gethostname()))
+        logger.info('USERNAME: %s', getpass.getuser())
+        logger.info('IP address: %s', socket.gethostbyname(socket.gethostname()))
         logger.info('MAC address: ' + ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2)))
-        logger.info('OS: ' + platform.platform())
+        logger.info('OS: %s', platform.platform())
         boot_time = str(datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S'))
-        logger.info('Server boot time: ' + boot_time)
+        logger.info('Server boot time: %s', boot_time)
 
 
 if __name__ == '__main__':

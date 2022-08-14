@@ -1,3 +1,5 @@
+"""Timer module"""
+
 import threading
 from threading import Thread
 import time
@@ -14,7 +16,7 @@ class Timer:
         self.single_shot = single_shot
 
     def set_result_func(self, func):
-        """Set callback"""
+        """Set result callback"""
         self._result_func = func
 
     def _internal_thread(self):
@@ -38,18 +40,19 @@ class Timer:
         self._event.set()
 
 
-# def test_func():
-#   print('test_func')
-#   return 42
+if __name__ == '__main__':
+    def test_func():
+      print('test_func')
+      return 42
 
-# def get_result(result):
-#   print('result: ', result)
+    def get_result(result):
+      print('result: ', result)
 
-# obj = Timer(2, test_func)
-# obj.set_result_func(get_result)
-# obj.start()
+    obj = Timer(2, test_func)
+    obj.set_result_func(get_result)
+    obj.start()
 
-# print('rrara')
+    print('rrara')
 
-# time.sleep(10)
-# obj.on_exit()
+    time.sleep(10)
+    obj.on_exit()
