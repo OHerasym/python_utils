@@ -1,9 +1,10 @@
-from custom_logger import logger
 import threading
 from threading import Thread
 import time
+from custom_logger import logger
 
 class Timer:
+    """Class for async call func after timeout"""
     def __init__(self, sleep_time, func, single_shot=False):
         self.thread = Thread(target=self._internal_thread)
         self._event = threading.Event()
@@ -13,6 +14,7 @@ class Timer:
         self.single_shot = single_shot
 
     def set_result_func(self, func):
+        """Set callback"""
         self._result_func = func
 
     def _internal_thread(self):
@@ -28,9 +30,11 @@ class Timer:
                 break
 
     def start(self):
+        """Start timer"""
         self.thread.start()
 
     def on_exit(self):
+        """Stop timer"""
         self._event.set()
 
 
@@ -49,4 +53,3 @@ class Timer:
 
 # time.sleep(10)
 # obj.on_exit()
-

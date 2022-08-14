@@ -108,8 +108,9 @@ class SQLLiteOrm(object):
         table_name = obj.__class__.__name__
 
         with self.lock:
-            query = ''
-            self.cursor.execute("DELETE FROM " + table_name + " WHERE ROWID = (SELECT MAX(ROWID) FROM " + table_name + ");")
+            query = "DELETE FROM " + table_name + 
+                " WHERE ROWID = (SELECT MAX(ROWID) FROM " + table_name + ");"
+            self.cursor.execute()
             self.conn.commit()
 
 

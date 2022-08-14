@@ -15,18 +15,21 @@ import pickle
 
 
 def get_browser():
+    """Get clean Firefox browser"""
     binary = FirefoxBinary('/usr/bin/firefox')
     browser = webdriver.Firefox(firefox_binary=binary)
     logger.debug('default firefox is used')
     return browser
 
 def get_profile_browser():
+    """Get Firefox with custom profile"""
     ffprofile = webdriver.FirefoxProfile('/home/oleh/.mozilla/firefox/80p26oye.default')
     browser = webdriver.Firefox(ffprofile)
     logger.debug('firefox profile is used')
     return browser
 
 def get_ajax_browser():
+    """Get Firefox with ajax requests"""
     binary = FirefoxBinary('/usr/bin/firefox')
     browser = ajax_driver.Firefox(firefox_binary=binary)
     logger.debug('AjaxBrowser is used')
@@ -43,7 +46,7 @@ class Browser:
     def init_browser(self):
         return get_browser()
 
-    def load_page(self, page, wait=1):
+    def load_page(self, page):
         self.browser.get(page)
         return self
 
@@ -51,28 +54,36 @@ class Browser:
         return self.browser.page_source
 
     def wait(self, seconds):
+        """Wait for page loading"""
         self.browser.implicitly_wait(seconds)
 
     def click(self, path):
+        """"Click for XPath element"""
         elem = self.browser.find_element_by_xpath(path).click()
 
     def clear(self, field):
+        """Clear Xpath EDIT element"""
         elem = self.browser.find_element_by_name(field).clear()
 
     def edit(self, field, data):
+        """Edit HTML EDIT"""
         elem = self.browser.find_element_by_name(field).send_keys(data)
 
     def elem(self, path):
+        """Get Xpath element"""
         return self.browser.find_element_by_xpath(path)
 
     def switch_window(self, num):
+        """Switch to another browser window"""
         self.browser.switch_to.window(self.browser.window_handles[num])
 
     def close(self):
+        """Close browser"""
         logger.info('close browser')
         self.browser.close()
 
     def close_display(self):
+        """Close virtual display"""
         self.display.stop()
         logger.info('close virtual display')
 

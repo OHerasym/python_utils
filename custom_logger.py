@@ -1,7 +1,7 @@
-import logging, logging.handlers
-import functools
+import logging
+import logging.handlers
 
-class MyLogger(object):
+class MyLogger:
     def init():
         _logger = logging.getLogger('custom_logger')
         _logger.setLevel(logging.DEBUG)
@@ -11,8 +11,9 @@ class MyLogger(object):
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
+        format_string = '[%(levelname)-8s][%(threadName)-10s][%(asctime)s] - %(message)s'
 
-        formatter = logging.Formatter('[%(levelname)-8s][%(threadName)-10s][%(asctime)s] - %(message)s')
+        formatter = logging.Formatter(format_string)
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
 
@@ -34,9 +35,9 @@ def logfunc(func, class_name=None):
 
 class MetaLog(type):
     def __new__(cls, name, bases, dct):
-        for m in dct:
-            if hasattr(dct[m], '__call__'):
-                dct[m] = logfunc(dct[m], name)
+        for function_name in dct:
+            if hasattr(dct[function_name], '__call__'):
+                dct[function_name] = logfunc(dct[function_name], name)
         return type.__new__(cls, name, bases, dct)
 
 

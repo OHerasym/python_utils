@@ -1,4 +1,4 @@
-from custom_logger import logger
+
 
 def thread(fn):
     def run(*k, **kw):

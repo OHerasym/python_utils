@@ -1,5 +1,3 @@
-from custom_logger import logger
-import psutil
 import shutil
 import platform
 from uuid import getnode as get_mac
@@ -8,23 +6,29 @@ import socket
 import time
 import threading
 from datetime import datetime
+import psutil
+from custom_logger import logger
 
 
 class SystemValue:
+    """Class for getting system values"""
     def __init__(self):
         pass
 
     def cpu(self):
+        """Get CPU usage"""
         cpu = psutil.cpu_percent(interval=1)
         logger.debug('CPU: ' + str(cpu))
         return cpu
 
     def ram(self):
+        """Get RAM usage"""
         ram = psutil.virtual_memory().available * 100 / psutil.virtual_memory().total
-        logger.debug('RAM: ' + str(int(ram)))
+        logger.debug('RAM: %s' % str(int(ram)))
         return int(ram)
 
     def hdd(self):
+        """Get HDD usage"""
         total, used, free = shutil.disk_usage("/")
         logger.debug('Total HDD: {} GiB'.format((total // (2**30))))
         logger.debug("Used HDD: {} GiB".format(used // (2**30)))
@@ -32,12 +36,13 @@ class SystemValue:
         return (free // (2**30))
 
     def sockets(self):
+        """Get sockets count"""
         result = psutil.net_connections()
         logger.debug('SOCKETS: ' + str(len(result)))
         return len(result)
 
     def _lan(self):
-        old_value = 0    
+        old_value = 0
 
         while True:
             new_value = psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv
@@ -57,6 +62,7 @@ class SystemValue:
 
 
 class SystemScanner:
+    """Class for scanning system for System Values"""
     def __init__(self, func, cpu=None, ram=None, hdd=None, sockets=None):
         self._thread = None
         self.stop_thread = False
@@ -130,7 +136,8 @@ class SystemScanner:
         logger.info('IP address: ' + socket.gethostbyname(socket.gethostname()))
         logger.info('MAC address: ' + ':'.join(("%012X" % get_mac())[i:i+2] for i in range(0, 12, 2)))
         logger.info('OS: ' + platform.platform())
-        logger.info('Server boot time: ' + str(datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S')))
+        boot_time = str(datetime.fromtimestamp(psutil.boot_time()).strftime('%Y-%m-%d %H:%M:%S'))
+        logger.info('Server boot time: ' + boot_time)
 
 
 if __name__ == '__main__':

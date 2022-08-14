@@ -1,9 +1,10 @@
-from custom_logger import logger
 import subprocess
 import sys
+from custom_logger import logger
 
 
 def autoimport(package_name):
+    """Import missed python package"""
     try:
         __import__(package_name)
     except ModuleNotFoundError as e:

@@ -16,12 +16,14 @@ from bson.objectid import ObjectId
 CHECK_SERVICE_BEFORE_START = True
 
 def runMongoService():
+    """Run mongo service"""
     if not isMongoServiceRun():
         print("Mongo service is not run. Trying to run it...")
         os.system("sudo systemctl start mongod")
         print("Mongo service is run.")
 
 def isMongoServiceRun():
+    """Check if mongo service is started"""
     if CHECK_SERVICE_BEFORE_START:
         try:
             client = MongoClient('localhost', 27017)
@@ -99,7 +101,8 @@ class MongoBaseCache:
             self.key_value = self.schema[0]
 
     def remove_item(self, key_value, schema_value_name, task_name):
-        self.db.posts.update_one({self.key_value: key_value}, {'$pull': {self.value_key: {schema_value_name: task_name}}})
+        self.db.posts.update_one({self.key_value: key_value}, 
+            {'$pull': {self.value_key: {schema_value_name: task_name}}})
     
     def update_value(self, key_value, schema_value_name, task_name, value):
         self.db.posts.find_and_modify(
@@ -338,7 +341,7 @@ class MongoBaseCache:
 
     def print(self):
         cursor = self.db.posts.find({})
-        for document in cursor: 
+        for document in cursor:
             pprint(document)
 
     def get_all(self):
@@ -396,7 +399,7 @@ class cached_photos(MongoBaseCache):
     def __init__(self):
         self.key_value = 'shortcode'
         self.exists_check = 'likes_count'
-        self.schema = ['username', 'shortcode', 'likes_count', 
+        self.schema = ['username', 'shortcode', 'likes_count',
             'real_likes_count', 'likers', 'location_city', 'location_country']
         MongoBaseCache.__init__(self)
 
