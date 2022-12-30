@@ -12,6 +12,9 @@ import seleniumwire.webdriver as ajax_driver #import webdriver  # Import from se
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from custom_logger import logger
 import pickle
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def get_browser():
@@ -35,11 +38,23 @@ def get_ajax_browser():
     logger.debug('AjaxBrowser is used')
     return browser
 
+def win_chrome_browser():
+    """Windows Chrome"""
+    options = webdriver.ChromeOptions();
+    options.add_argument("--no-sandbox");
+    options.add_argument("--disable-dev-shm-usage");
+    options.add_argument("--user-data-dir=C:\\Users\\Oleh\\AppData\\Local\\Google\\Chrome\\User Data");
+    options.set_capability('unhandledPromptBehavior', 'accept')
+    binary = webdriver.Chrome(chrome_options=options, executable_path="C:\\Windows\\System32\\chromedriver.exe")
+    binary.implicitly_wait(10)
+    logger.debug('Windows Chrome browser is used')
+    return binary
+
 class Browser:
     def __init__(self, hide_browser=False):
-        self.display = Display(visible=0,size=(1024,768))
-        if hide_browser:
-            self.display.start()
+        # self.display = Display(visible=0,size=(1024,768))
+        # if hide_browser:
+        #     self.display.start()
         self.browser = self.init_browser()
         logger.info('init browser')
 
@@ -59,7 +74,7 @@ class Browser:
 
     def click(self, path):
         """"Click for XPath element"""
-        elem = self.browser.find_element_by_xpath(path).click()
+        elem = self.browser.find_element('xpath', path).click()
 
     def clear(self, field):
         """Clear Xpath EDIT element"""
@@ -76,6 +91,9 @@ class Browser:
     def switch_window(self, num):
         """Switch to another browser window"""
         self.browser.switch_to.window(self.browser.window_handles[num])
+
+    def alert_accept(self):
+        self.browser.switch_to.alert.accept()
 
     def close(self):
         """Close browser"""
@@ -128,6 +146,22 @@ class HiddenAjaxBrowser(AjaxBrowser):
     def __init__(self):
         logger.info('HiddenAjaxBrowser init')
         super().__init__(True)
+
+class ChromeBrowser(Browser):
+    def __init__(self):
+        logger.info('chrome browser init')
+        super().__init__(False)
+
+    def init_browser(self):
+        return win_chrome_browser()
+
+    def read_cookies(self):
+        cookies = pickle.load(open("cookies.pkl", "rb"))
+        for cookie in cookies:
+            self.browser.add_cookie(cookie)
+
+    def write_cookies(self):
+        pickle.dump( self.browser.get_cookies() , open("cookies.pkl","wb"))
 
 
 # obj = AjaxBrowser()
