@@ -1,9 +1,7 @@
-name: Auto Tag Commit
+name: Manually Tag Commit
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 
 jobs:
   tag:
@@ -23,3 +21,4 @@ jobs:
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git tag $new_tag
         git push origin $new_tag
+
