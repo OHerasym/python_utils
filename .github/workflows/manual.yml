@@ -1,0 +1,19 @@
+- name: Create/Update tag
+  # You may pin to the exact commit or the version.
+  # uses: rickstaa/action-create-tag@55450aa830ede05bcbb37fbdad678e36c73e9d15
+  uses: rickstaa/action-create-tag@v1.6.4
+  with:
+    # GITHUB_TOKEN. Optional if you use checkout@v2 action.
+    github_token: # optional, default is ${{ github.token }}
+    # Tag you want to create or update.
+    tag: 
+    # Tag message.
+    message: # optional
+    # The commit SHA hash on which you want to push the tag. Uses latest commit by default.
+    commit_sha: # optional
+    # Optional. Force push the tag. Defaults to 'false'.
+    force_push_tag: # optional, default is false
+    # Optional. Whether to throw an error when the tag already exists. Defaults to 'true'.
+    tag_exists_error: # optional, default is true
+    # Optional. Skips verifying when pushing the tag. Defaults to 'false'.
+    no_verify_tag: # optional, default is false
