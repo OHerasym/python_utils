@@ -14,15 +14,18 @@ jobs:
     - name: Auto tag
       run: |
         git fetch --all --tags
-        if git rev-list --tags --max-count=1 > /dev/null 2>&1; then
-            latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-            new_tag="v$(echo $latest_tag | awk -F. '{printf "%d.%d", $1, $2+1}')"
+        LATEST_TAG=$(git describe --tags --always 2>/dev/null)
+        
+        if [[ $? -ne 0 ]]; then
+            # If the git describe command failed, there are no tags
+            NEW_TAG="v1.0"
         else
-            new_tag="v1.0"
+            NEW_TAG="v$(echo $LATEST_TAG | awk -F. '{printf "%d.%d", $1, $2+1}')"
         fi
         
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git tag $new_tag
-        git push origin $new_tag
+        git tag $NEW_TAG
+        git push origin $NEW_TAG
+
 
